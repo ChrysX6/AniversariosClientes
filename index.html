@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Águia Contab - Gestão de Aniversariantes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* ============================================
+           RESET E VARIÁVEIS
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f2b4a;
+            --primary-dark: #0a1e33;
+            --primary-light: #1a4a7a;
+            --gold: #c9a84c;
+            --gold-light: #e8d5a3;
+            --gold-gradient: linear-gradient(135deg, #c9a84c, #f0d68a);
+            --bg-gradient: linear-gradient(135deg, #0f2b4a 0%, #1a4a7a 100%);
+            --shadow: 0 8px 32px rgba(0,0,0,0.12);
+            --shadow-hover: 0 12px 48px rgba(0,0,0,0.18);
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        header {
+            background: var(--bg-gradient);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-wrapper {
+            width: 56px;
+            height: 56px;
+            background: var(--gold-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--primary);
+            box-shadow: 0 0 30px rgba(201,168,76,0.3);
+            transition: var(--transition);
+        }
+
+        .logo-wrapper:hover {
+            transform: scale(1.05) rotate(-5deg);
+        }
+
+        .header-title h1 {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .header-title span {
+            color: var(--gold);
+            font-size: 13px;
+            font-weight: 400;
+            display: block;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            padding: 8px 18px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-item i {
+            color: var(--gold);
+            font-size: 16px;
+        }
+
+        .stat-item strong {
+            font-size: 18px;
+            color: var(--gold);
+        }
+
+        /* ============================================
+           BANNER - ANIVERSARIANTES DO DIA
+           ============================================ */
+        .banner-hoje {
+            display: none;
+            background: linear-gradient(135deg, #c9a84c, #f0d68a, #c9a84c);
+            background-size: 200% 200%;
+            animation: bannerShine 4s ease-in-out infinite;
+            padding: 24px 40px;
+            margin: 20px 20px 0 20px;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 40px rgba(201,168,76,0.3);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .banner-hoje::before {
+            content: '🎉';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 80px;
+            opacity: 0.15;
+        }
+
+        .banner-hoje.ativo {
+            display: block;
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-icon {
+            font-size: 48px;
+            animation: bounceIcon 2s ease-in-out infinite;
+        }
+
+        .banner-text h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+
+        .banner-text p {
+            font-size: 15px;
+            color: var(--primary-dark);
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .banner-socios {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-left: auto;
+        }
+
+        .banner-socio-card {
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        .banner-socio-card:hover {
+            transform: scale(1.05);
+            background: rgba(255,255,255,0.35);
+        }
+
+        .banner-socio-card .avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .banner-socio-card .info {
+            color: var(--primary-dark);
+        }
+
+        .banner-socio-card .info .nome {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .banner-socio-card .info .empresa {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        @keyframes bannerShine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes bounceIcon {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-8px) rotate(-5deg); }
+            75% { transform: translateY(-8px) rotate(5deg); }
+        }
+
+        /* ============================================
+           CONTAINER PRINCIPAL
+           ============================================ */
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* ============================================
+           CARDS
+           ============================================ */
+        .card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            transition: var(--transition);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-title i {
+            color: var(--gold);
+            font-size: 22px;
+        }
+
+        .card-title .badge-count {
+            background: var(--gold);
+            color: var(--primary);
+            padding: 2px 14px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* ============================================
+           FORMULÁRIO
+           ============================================ */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 16px;
+            border: 2px solid #e8ecf0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: var(--transition);
+            font-family: var(--font);
+            background: #fafbfc;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--gold);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(201,168,76,0.12);
+            background: #fff;
+        }
+
+        .form-group input.error {
+            border-color: #e74c3c;
+        }
+
+        .socio-group {
+            background: #f8fafc;
+            padding: 18px 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--gold);
+            margin-top: 8px;
+            transition: var(--transition);
+        }
+
+        .socio-group:hover {
+            background: #f0f4f8;
+        }
+
+        .socio-group .socio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .socio-group .socio-header h4 {
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .socio-group .socio-header h4 i {
+            color: var(--gold);
+            margin-right: 6px;
+        }
+
+        .btn-remove-socio {
+            background: #fee;
+            border: none;
+            color: #e74c3c;
+            padding: 4px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-remove-socio:hover {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .btn-add-socio {
+            background: transparent;
+            border: 2px dashed var(--gold);
+            color: var(--gold);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: var(--transition);
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .btn-add-socio:hover {
+            background: var(--gold);
+            color: #fff;
+            border-color: var(--gold);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        /* ============================================
+           BOTÕES
+           ============================================ */
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background: var(--gold-gradient);
+            color: var(--primary);
+            box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(201,168,76,0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(39,174,96,0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(39,174,96,0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(231,76,60,0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: #fff;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        /* ============================================
+           TOOLBAR
+           ============================================ */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .toolbar .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 420px;
+        }
+
+        .toolbar .search-box input {
+            flex: 1;
+            padding: 11px 18px;
+            border: 2px solid #e8ecf0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: var(--transition);
+            font-family: var(--font);
+            background: #fafbfc;
+        }
+
+        .toolbar .search-box input:focus {
+            border-color: var(--gold);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(201,168,76,0.1);
+            background: #fff;
+        }
+
+        .toolbar .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================
+           TABELA
+           ============================================ */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        table thead {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        table tbody tr {
+            transition: var(--transition);
+        }
+
+        table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* DESTAQUES DE ANIVERSÁRIOS */
+        .row-hoje {
+            background: linear-gradient(90deg, #fff8e1, #fff3cd) !important;
+            border-left: 5px solid var(--gold);
+            animation: pulseRow 2.5s ease-in-out infinite;
+            position: relative;
+        }
+
+        .row-hoje::after {
+            content: '🎉';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 28px;
+            opacity: 0.3;
+        }
+
+        .row-proximo {
+            background: #fffde7 !important;
+            border-left: 4px solid #f39c12;
+        }
+
+        @keyframes pulseRow {
+            0%, 100% { background: linear-gradient(90deg, #fff8e1, #fff3cd) !important; }
+            50% { background: linear-gradient(90deg, #ffecb3, #ffe082) !important; }
+        }
+
+        .badge-hoje {
+            background: var(--gold-gradient);
+            color: var(--primary);
+            padding: 3px 14px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            animation: pulseBadge 1.8s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        .badge-proximo {
+            background: #f39c12;
+            color: #fff;
+            padding: 3px 14px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        @keyframes pulseBadge {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(201,168,76,0.2); }
+        }
+
+        .socios-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .socios-list .socio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .socios-list .socio-item:last-child {
+            border-bottom: none;
+        }
+
+        .socios-list .socio-item .dias {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .socios-list .socio-item .dias.hoje {
+            color: var(--gold);
+        }
+
+        .socios-list .socio-item .dias.proximo {
+            color: #f39c12;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 56px;
+            color: #ddd;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        /* ============================================
+           MODAL
+           ============================================ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 32px 36px;
+            max-width: 720px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h3 {
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-header h3 i {
+            color: var(--gold);
+            margin-right: 8px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #fee;
+            color: #e74c3c;
+            transform: rotate(90deg);
+        }
+
+        /* ============================================
+           TOAST
+           ============================================ */
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .toast {
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 500;
+            animation: slideInRight 0.4s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast-success {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        .toast-error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .toast-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .toast-info {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .toast i {
+            font-size: 20px;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        footer {
+            background: var(--primary-dark);
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            margin-top: auto;
+            border-top: 2px solid var(--gold);
+        }
+
+        footer strong {
+            color: var(--gold);
+        }
+
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        footer .footer-links a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            transition: var(--transition);
+            font-size: 12px;
+        }
+
+        footer .footer-links a:hover {
+            color: var(--gold);
+        }
+
+        /* ============================================
+           ANIMAÇÕES
+           ============================================ */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ============================================
+           SCROLLBAR PERSONALIZADA
+           ============================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b8973a;
+        }
+
+        /* ============================================
+           RESPONSIVIDADE
+           ============================================ */
+        @media (max-width: 1024px) {
+            .banner-hoje {
+                padding: 20px 24px;
+            }
+
+            .banner-socios {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 12px 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .header-left {
+                justify-content: center;
+            }
+
+            .header-stats {
+                justify-content: center;
+            }
+
+            .stat-item {
+                font-size: 12px;
+                padding: 6px 14px;
+            }
+
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 20px 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .banner-hoje {
+                padding: 16px 18px;
+                margin: 12px 12px 0 12px;
+            }
+
+            .banner-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .banner-icon {
+                font-size: 32px;
+            }
+
+            .banner-text h2 {
+                font-size: 18px;
+            }
+
+            .banner-socio-card {
+                width: 100%;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar .search-box {
+                max-width: 100%;
+            }
+
+            .modal-content {
+                padding: 20px;
+                margin: 12px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            table th,
+            table td {
+                padding: 10px 8px;
+            }
+
+            .acoes .btn-sm {
+                padding: 4px 8px;
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title h1 {
+                font-size: 17px;
+            }
+
+            .logo-wrapper {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+
+            .stat-item strong {
+                font-size: 15px;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+
+            .banner-hoje::before {
+                font-size: 40px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============================================
+HEADER
+============================================ -->
+<header>
+    <div class="header-left">
+        <div class="logo-wrapper">🦅</div>
+        <div class="header-title">
+            <h1>Águia Contab Tatuapé</h1>
+            <span><i class="fas fa-birthday-cake"></i> Gestão de Aniversariantes</span>
+        </div>
+    </div>
+    <div class="header-stats">
+        <div class="stat-item">
+            <i class="fas fa-users"></i>
+            Total: <strong id="totalContador">0</strong>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-calendar-alt"></i>
+            Mês: <strong id="mesContador">0</strong>
+        </div>
+        <div class="stat-item" style="background: rgba(201,168,76,0.2); border-color: var(--gold);">
+            <i class="fas fa-star"></i>
+            Hoje: <strong id="hojeContador">0</strong>
+        </div>
+    </div>
+</header>
+
+<!-- ============================================
+BANNER - ANIVERSARIANTES DO DIA
+============================================ -->
+<div class="banner-hoje" id="bannerHoje">
+    <div class="banner-content">
+        <div class="banner-icon">🎉</div>
+        <div class="banner-text">
+            <h2>Aniversariantes do Dia</h2>
+            <p>Hoje é um dia especial! Parabéns aos nossos clientes!</p>
+        </div>
+        <div class="banner-socios" id="bannerSocios">
+            <!-- Preenchido dinamicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+CONTAINER PRINCIPAL
+============================================ -->
+<div class="container">
+
+    <!-- CARD - FORMULÁRIO -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-user-plus"></i>
+                <span id="formTitle">Adicionar Aniversariante</span>
+            </div>
+        </div>
+
+        <form id="formAniversariante">
+            <input type="hidden" id="editId" value="">
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nome da Empresa <span class="required">*</span></label>
+                    <input type="text" id="empresa" placeholder="Ex: Tech Solutions LTDA" required>
+                </div>
+                <div class="form-group">
+                    <label>CNPJ <span class="required">*</span></label>
+                    <input type="text" id="cnpj" placeholder="00.000.000/0000-00" maxlength="18" required>
+                </div>
+            </div>
+
+            <div id="sociosContainer">
+                <div class="socio-group" data-socio="1">
+                    <div class="socio-header">
+                        <h4><i class="fas fa-user"></i> Sócio 1 <span class="required">*</span></h4>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome Completo</label>
+                            <input type="text" class="socio-nome" placeholder="Nome do sócio" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" class="socio-data" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-add-socio" id="btnAddSocio">
+                <i class="fas fa-plus-circle"></i> Adicionar outro sócio
+            </button>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btnSubmit">
+                    <i class="fas fa-save"></i> <span id="btnSubmitText">Salvar</span>
+                </button>
+                <button type="button" class="btn btn-warning" id="btnCancelar" style="display:none;">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- CARD - LISTA -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-list"></i>
+                Lista de Aniversariantes
+                <span class="badge-count" id="totalBadge">0</span>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar por empresa ou sócio...">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-success" id="btnExportCSV">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </button>
+                <button class="btn btn-outline" id="btnRefresh">
+                    <i class="fas fa-sync"></i> Atualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:50px;">#</th>
+                        <th>Empresa / Status</th>
+                        <th>CNPJ</th>
+                        <th>Sócios</th>
+                        <th style="width:50px;"></th>
+                        <th style="width:130px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <h3>Nenhum aniversariante cadastrado</h3>
+                                <p>Adicione o primeiro usando o formulário acima!</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+FOOTER
+============================================ -->
+<footer>
+    <p>© 2026 <strong>Águia Contab Tatuapé</strong> - Todos os direitos reservados</p>
+    <div class="footer-links">
+        <a href="#"><i class="fas fa-phone"></i> (11) 9xxxx-xxxx</a>
+        <a href="#"><i class="fas fa-envelope"></i> contato@aguiacontab.com.br</a>
+        <a href="#"><i class="fas fa-map-marker-alt"></i> Tatuapé, São Paulo - SP</a>
+    </div>
+</footer>
+
+<!-- ============================================
+MODAL - EDITAR
+============================================ -->
+<div class="modal" id="modalEdit">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Editar Aniversariante</h3>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
+        <form id="formEdit">
+            <input type="hidden" id="editIdModal" value="">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Empresa <span class="required">*</span></label>
+                    <input type="text" id="editEmpresa" required>
+                </div>
+                <div class="form-group">
+                    <label>CNPJ <span class="required">*</span></label>
+                    <input type="text" id="editCnpj" maxlength="18" required>
+                </div>
+            </div>
+            <div id="editSociosContainer"></div>
+            <button type="button" class="btn-add-socio" id="btnAddSocioEdit" style="margin-top:15px;">
+                <i class="fas fa-plus-circle"></i> Adicionar sócio
+            </button>
+            <div class="form-actions" style="margin-top:20px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Atualizar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="fecharModal()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================
+TOAST CONTAINER
+============================================ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================
+JAVASCRIPT - COMPLETO E CORRIGIDO
+============================================ -->
+<script>
+    // ============================================
+    // CONFIGURAÇÃO - URL DO GOOGLE APPS SCRIPT
+    // ============================================
+    // ✅ URL DO SEU SCRIPT JÁ CONFIGURADA
+    const API_URL = 'https://script.google.com/macros/s/AKfycbykvTGrF3tddhdVvfhqaOLkKIeORdYuCWniK6YAPqSpRLeumVr3KQI-b0q3Fw-4wPg/exec';
+
+    // ============================================
+    // ESTADO GLOBAL
+    // ============================================
+    let aniversariantes = [];
+    let socioCount = 1;
+    let editSocioCount = 1;
+
+    // ============================================
+    // FUNÇÕES DE DATA
+    // ============================================
+    function calcularDiasAteAniversario(dataNasc) {
+        if (!dataNasc) return null;
+        const hoje = new Date();
+        const nasc = new Date(dataNasc);
+        const aniversarioEsteAno = new Date(hoje.getFullYear(), nasc.getMonth(), nasc.getDate());
+        if (aniversarioEsteAno < hoje) {
+            aniversarioEsteAno.setFullYear(hoje.getFullYear() + 1);
+        }
+        const diffTime = aniversarioEsteAno - hoje;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function isAniversarioHoje(dataNasc) {
+        if (!dataNasc) return false;
+        const hoje = new Date();
+        const nasc = new Date(dataNasc);
+        return hoje.getDate() === nasc.getDate() && hoje.getMonth() === nasc.getMonth();
+    }
+
+    function isAniversarioProximo(dataNasc, dias = 7) {
+        if (!dataNasc) return false;
+        const diff = calcularDiasAteAniversario(dataNasc);
+        return diff !== null && diff > 0 && diff <= dias;
+    }
+
+    function formatarDias(dias) {
+        if (dias === 0) return '🎉 HOJE';
+        if (dias === 1) return 'Amanhã';
+        return `${dias} dias`;
+    }
+
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100px)';
+            toast.style.transition = 'all 0.4s ease';
+            setTimeout(() => {
+                if (toast.parentNode) toast.remove();
+            }, 400);
+        }, 4500);
+    }
+
+    // ============================================
+    // MÁSCARA CNPJ
+    // ============================================
+    function mascaraCnpj(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 14) value = value.slice(0, 14);
+        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+        input.value = value;
+    }
+
+    // ============================================
+    // SOCIOS - FRONTEND
+    // ============================================
+    function addSocioForm(containerId, count) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const div = document.createElement('div');
+        div.className = 'socio-group';
+        div.dataset.socio = count;
+        div.innerHTML = `
+            <div class="socio-header">
+                <h4><i class="fas fa-user"></i> Sócio ${count}</h4>
+                <button type="button" class="btn-remove-socio" onclick="removerSocio(this, '${containerId}')">
+                    <i class="fas fa-times"></i> Remover
+                </button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" class="socio-nome" placeholder="Nome do sócio">
+                </div>
+                <div class="form-group">
+                    <label>Data de Nascimento</label>
+                    <input type="date" class="socio-data">
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+        reorganizarSocios(containerId);
+    }
+
+    function removerSocio(btn, containerId) {
+        const group = btn.closest('.socio-group');
+        const container = document.getElementById(containerId);
+        if (!container || !group) return;
+        if (container.children.length <= 1) {
+            showToast('O primeiro sócio é obrigatório!', 'warning');
+            return;
+        }
+        group.style.transition = 'all 0.3s ease';
+        group.style.opacity = '0';
+        group.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            group.remove();
+            reorganizarSocios(containerId);
+        }, 300);
+    }
+
+    function reorganizarSocios(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const socios = container.querySelectorAll('.socio-group');
+        socios.forEach((el, idx) => {
+            const num = idx + 1;
+            el.dataset.socio = num;
+            const header = el.querySelector('.socio-header h4');
+            if (header) {
+                header.innerHTML = `<i class="fas fa-user"></i> Sócio ${num}`;
+            }
+            if (num === 1) {
+                const removeBtn = el.querySelector('.btn-remove-socio');
+                if (removeBtn) removeBtn.style.display = 'none';
+            } else {
+                let removeBtn = el.querySelector('.btn-remove-socio');
+                if (!removeBtn) {
+                    const headerDiv = el.querySelector('.socio-header');
+                    if (headerDiv) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn-remove-socio';
+                        btn.innerHTML = '<i class="fas fa-times"></i> Remover';
+                        btn.onclick = function() { removerSocio(this, containerId); };
+                        headerDiv.appendChild(btn);
+                    }
+                } else {
+                    removeBtn.style.display = 'inline-block';
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // API - CRUD (COM TRATAMENTO DE CORS)
+    // ============================================
+    async function apiRequest(endpoint, method = 'GET', data = null) {
+        const url = `${API_URL}${endpoint}`;
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            mode: 'cors',
+        };
+        if (data) {
+            options.body = JSON.stringify(data);
+        }
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            showToast('Erro na comunicação com o servidor. Verifique sua conexão.', 'error');
+            throw error;
+        }
+    }
+
+    // ============================================
+    // CARREGAR DADOS
+    // ============================================
+    async function carregarDados() {
+        try {
+            const result = await apiRequest('/aniversariantes', 'GET');
+            if (result.success) {
+                aniversariantes = result.data || [];
+            } else {
+                aniversariantes = [];
+                showToast('Erro ao carregar dados: ' + (result.message || ''), 'error');
+            }
+        } catch (error) {
+            aniversariantes = [];
+            // Não mostrar toast duplicado aqui, a apiRequest já mostra
+        }
+        ordenarPorProximosAniversarios();
+        renderizarTabela(aniversariantes);
+        atualizarContadores();
+        atualizarBannerHoje();
+    }
+
+    // ============================================
+    // ORDENAR
+    // ============================================
+    function ordenarPorProximosAniversarios() {
+        aniversariantes.sort((a, b) => {
+            const diasA = Math.min(...a.socios.map(s => calcularDiasAteAniversario(s.dataNasc) || 999));
+            const diasB = Math.min(...b.socios.map(s => calcularDiasAteAniversario(s.dataNasc) || 999));
+            return diasA - diasB;
+        });
+    }
+
+    // ============================================
+    // BANNER - ANIVERSARIANTES DO DIA
+    // ============================================
+    function atualizarBannerHoje() {
+        const banner = document.getElementById('bannerHoje');
+        const container = document.getElementById('bannerSocios');
+        if (!banner || !container) return;
+        
+        const hoje = new Date();
+        const aniversariantesHoje = aniversariantes.filter(item =>
+            item.socios.some(s => {
+                if (!s.dataNasc) return false;
+                const dt = new Date(s.dataNasc);
+                return dt.getDate() === hoje.getDate() && dt.getMonth() === hoje.getMonth();
+            })
+        );
+
+        if (aniversariantesHoje.length === 0) {
+            banner.classList.remove('ativo');
+            return;
+        }
+
+        banner.classList.add('ativo');
+        
+        let html = '';
+        aniversariantesHoje.forEach(item => {
+            item.socios.forEach(s => {
+                if (isAniversarioHoje(s.dataNasc)) {
+                    const initials = s.nome ? s.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+                    html += `
+                        <div class="banner-socio-card">
+                            <div class="avatar">${initials}</div>
+                            <div class="info">
+                                <div class="nome">${s.nome || 'Sócio'}</div>
+                                <div class="empresa">${item.empresa || 'Empresa'}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        });
+        container.innerHTML = html;
+    }
+
+    // ============================================
+    // RENDERIZAR TABELA
+    // ============================================
+    function renderizarTabela(data) {
+        const tbody = document.getElementById('tableBody');
+        const badge = document.getElementById('totalBadge');
+        if (!tbody) return;
+        
+        if (badge) badge.textContent = data.length;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>Nenhum aniversariante cadastrado</h3>
+                            <p>Comece agora! Adicione um novo aniversariante usando o formulário acima.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        data.forEach((item, index) => {
+            let rowClass = '';
+            let statusBadge = '';
+            let statusIcon = '';
+
+            const sociosComStatus = item.socios.map(s => {
+                const dias = calcularDiasAteAniversario(s.dataNasc);
+                const hoje = isAniversarioHoje(s.dataNasc);
+                const proximo = isAniversarioProximo(s.dataNasc);
+                return { ...s, dias, hoje, proximo };
+            });
+
+            sociosComStatus.sort((a, b) => (a.dias || 999) - (b.dias || 999));
+
+            const primeiro = sociosComStatus[0];
+            if (primeiro) {
+                if (primeiro.hoje) {
+                    rowClass = 'row-hoje';
+                    statusBadge = '<span class="badge-hoje">🎉 HOJE!</span>';
+                    statusIcon = '🎉';
+                } else if (primeiro.proximo) {
+                    rowClass = 'row-proximo';
+                    statusBadge = `<span class="badge-proximo">📅 ${formatarDias(primeiro.dias)}</span>`;
+                    statusIcon = '📅';
+                }
+            }
+
+            const sociosHtml = sociosComStatus.map((s, i) => {
+                const dt = s.dataNasc ? new Date(s.dataNasc) : null;
+                const dataStr = dt ? dt.toLocaleDateString('pt-BR') : '-';
+                let corClass = '';
+                let label = '';
+                if (s.hoje) {
+                    corClass = 'hoje';
+                    label = '🎉 HOJE';
+                } else if (s.proximo) {
+                    corClass = 'proximo';
+                    label = `📅 ${formatarDias(s.dias)}`;
+                }
+                return `
+                    <div class="socio-item">
+                        <span><strong>${i+1}.</strong> ${s.nome || '-'} <span style="color:#999;font-size:12px;">${dataStr}</span></span>
+                        <span class="dias ${corClass}">${label}</span>
+                    </div>
+                `;
+            }).join('');
+
+            html += `
+                <tr class="${rowClass}">
+                    <td>${index + 1}</td>
+                    <td>
+                        <strong>${item.empresa || '-'}</strong>
+                        <br>${statusBadge}
+                    </td>
+                    <td>${item.cnpj || '-'}</td>
+                    <td><div class="socios-list">${sociosHtml}</div></td>
+                    <td style="text-align:center;font-size:22px;">${statusIcon}</td>
+                    <td>
+                        <div class="acoes">
+                            <button class="btn btn-primary btn-sm btn-icon" onclick="abrirModalEditar(${item.id})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm btn-icon" onclick="excluirRegistro(${item.id})" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+    }
+
+    // ============================================
+    // CONTADORES
+    // ============================================
+    function atualizarContadores() {
+        const hoje = new Date();
+        const totalEl = document.getElementById('totalContador');
+        const mesEl = document.getElementById('mesContador');
+        const hojeEl = document.getElementById('hojeContador');
+        
+        if (totalEl) totalEl.textContent = aniversariantes.length;
+
+        if (mesEl) {
+            const mesAtual = hoje.getMonth();
+            const countMes = aniversariantes.filter(item =>
+                item.socios.some(s => {
+                    if (!s.dataNasc) return false;
+                    const dt = new Date(s.dataNasc);
+                    return dt.getMonth() === mesAtual;
+                })
+            ).length;
+            mesEl.textContent = countMes;
+        }
+
+        if (hojeEl) {
+            const countHoje = aniversariantes.filter(item =>
+                item.socios.some(s => {
+                    if (!s.dataNasc) return false;
+                    const dt = new Date(s.dataNasc);
+                    return dt.getDate() === hoje.getDate() && dt.getMonth() === hoje.getMonth();
+                })
+            ).length;
+            hojeEl.textContent = countHoje;
+        }
+    }
+
+    // ============================================
+    // BUSCA
+    // ============================================
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const term = this.value.toLowerCase().trim();
+            if (!term) {
+                renderizarTabela(aniversariantes);
+                return;
+            }
+            const filtered = aniversariantes.filter(item => {
+                const empresaMatch = (item.empresa || '').toLowerCase().includes(term);
+                const socioMatch = item.socios.some(s => (s.nome || '').toLowerCase().includes(term));
+                return empresaMatch || socioMatch;
+            });
+            renderizarTabela(filtered);
+        });
+    }
+
+    // ============================================
+    // FORMULÁRIO - ADICIONAR
+    // ============================================
+    const formAniversariante = document.getElementById('formAniversariante');
+    if (formAniversariante) {
+        formAniversariante.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            }
+
+            const empresa = document.getElementById('empresa');
+            const cnpj = document.getElementById('cnpj');
+            const editId = document.getElementById('editId');
+
+            const socioGroups = document.querySelectorAll('#sociosContainer .socio-group');
+            const socios = [];
+            socioGroups.forEach(group => {
+                const nome = group.querySelector('.socio-nome');
+                const data = group.querySelector('.socio-data');
+                if (nome && data) {
+                    const nomeVal = nome.value.trim();
+                    const dataVal = data.value;
+                    if (nomeVal || dataVal) {
+                        socios.push({ nome: nomeVal, dataNasc: dataVal });
+                    }
+                }
+            });
+
+            if (socios.length === 0) {
+                showToast('Adicione pelo menos um sócio!', 'warning');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+                }
+                return;
+            }
+
+            const data = { 
+                empresa: empresa ? empresa.value.trim() : '', 
+                cnpj: cnpj ? cnpj.value.trim() : '', 
+                socios 
+            };
+
+            try {
+                let result;
+                if (editId && editId.value) {
+                    data.id = parseInt(editId.value);
+                    result = await apiRequest('/aniversariantes', 'PUT', data);
+                } else {
+                    result = await apiRequest('/aniversariantes', 'POST', data);
+                }
+                if (result && result.success) {
+                    showToast(editId && editId.value ? 'Registro atualizado com sucesso!' : 'Registro adicionado com sucesso!', 'success');
+                    resetarFormulario();
+                    await carregarDados();
+                } else {
+                    showToast('Erro: ' + (result?.message || 'Operação falhou'), 'error');
+                }
+            } catch (error) {
+                // Erro já tratado no apiRequest
+            }
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> <span id="btnSubmitText">Salvar</span>';
+            }
+        });
+    }
+
+    function resetarFormulario() {
+        const form = document.getElementById('formAniversariante');
+        if (form) form.reset();
+        
+        const editId = document.getElementById('editId');
+        if (editId) editId.value = '';
+        
+        const btnText = document.getElementById('btnSubmitText');
+        if (btnText) btnText.textContent = 'Salvar';
+        
+        const formTitle = document.getElementById('formTitle');
+        if (formTitle) formTitle.textContent = 'Adicionar Aniversariante';
+        
+        const btnCancelar = document.getElementById('btnCancelar');
+        if (btnCancelar) btnCancelar.style.display = 'none';
+        
+        const container = document.getElementById('sociosContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="socio-group" data-socio="1">
+                    <div class="socio-header">
+                        <h4><i class="fas fa-user"></i> Sócio 1 <span class="required">*</span></h4>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome Completo</label>
+                            <input type="text" class="socio-nome" placeholder="Nome do sócio" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" class="socio-data" required>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        socioCount = 1;
+        
+        const cnpj = document.getElementById('cnpj');
+        if (cnpj) cnpj.value = '';
+    }
+
+    // ============================================
+    // BOTÃO CANCELAR
+    // ============================================
+    const btnCancelar = document.getElementById('btnCancelar');
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', resetarFormulario);
+    }
+
+    // ============================================
+    // BOTÃO ADICIONAR SÓCIO (FORM PRINCIPAL)
+    // ============================================
+    const btnAddSocio = document.getElementById('btnAddSocio');
+    if (btnAddSocio) {
+        btnAddSocio.addEventListener('click', function() {
+            socioCount++;
+            addSocioForm('sociosContainer', socioCount);
+        });
+    }
+
+    // ============================================
+    // MODAL - EDITAR
+    // ============================================
+    function abrirModalEditar(id) {
+        const item = aniversariantes.find(a => a.id === id);
+        if (!item) {
+            showToast('Registro não encontrado!', 'error');
+            return;
+        }
+
+        const editIdModal = document.getElementById('editIdModal');
+        const editEmpresa = document.getElementById('editEmpresa');
+        const editCnpj = document.getElementById('editCnpj');
+        const container = document.getElementById('editSociosContainer');
+        
+        if (editIdModal) editIdModal.value = id;
+        if (editEmpresa) editEmpresa.value = item.empresa || '';
+        if (editCnpj) editCnpj.value = item.cnpj || '';
+
+        if (container) {
+            container.innerHTML = '';
+            editSocioCount = 0;
+
+            item.socios.forEach((s, i) => {
+                const num = i + 1;
+                editSocioCount = num;
+                const div = document.createElement('div');
+                div.className = 'socio-group';
+                div.dataset.socio = num;
+                const btnRemove = num > 1 ? `
+                    <button type="button" class="btn-remove-socio" onclick="removerSocio(this, 'editSociosContainer')">
+                        <i class="fas fa-times"></i> Remover
+                    </button>
+                ` : '';
+                div.innerHTML = `
+                    <div class="socio-header">
+                        <h4><i class="fas fa-user"></i> Sócio ${num}</h4>
+                        ${btnRemove}
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome Completo</label>
+                            <input type="text" class="socio-nome" value="${s.nome || ''}" placeholder="Nome do sócio">
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" class="socio-data" value="${s.dataNasc || ''}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        const modal = document.getElementById('modalEdit');
+        if (modal) modal.classList.add('active');
+    }
+
+    function fecharModal() {
+        const modal = document.getElementById('modalEdit');
+        if (modal) modal.classList.remove('active');
+    }
+
+    const modalEdit = document.getElementById('modalEdit');
+    if (modalEdit) {
+        modalEdit.addEventListener('click', function(e) {
+            if (e.target === this) fecharModal();
+        });
+    }
+
+    // ============================================
+    // BOTÃO ADICIONAR SÓCIO (MODAL)
+    // ============================================
+    const btnAddSocioEdit = document.getElementById('btnAddSocioEdit');
+    if (btnAddSocioEdit) {
+        btnAddSocioEdit.addEventListener('click', function() {
+            editSocioCount++;
+            addSocioForm('editSociosContainer', editSocioCount);
+        });
+    }
+
+    // ============================================
+    // FORMULÁRIO - EDITAR (MODAL)
+    // ============================================
+    const formEdit = document.getElementById('formEdit');
+    if (formEdit) {
+        formEdit.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editIdModal')?.value || '0');
+            const empresa = document.getElementById('editEmpresa')?.value.trim() || '';
+            const cnpj = document.getElementById('editCnpj')?.value.trim() || '';
+
+            const socioGroups = document.querySelectorAll('#editSociosContainer .socio-group');
+            const socios = [];
+            socioGroups.forEach(group => {
+                const nome = group.querySelector('.socio-nome');
+                const data = group.querySelector('.socio-data');
+                if (nome && data) {
+                    const nomeVal = nome.value.trim();
+                    const dataVal = data.value;
+                    if (nomeVal || dataVal) {
+                        socios.push({ nome: nomeVal, dataNasc: dataVal });
+                    }
+                }
+            });
+
+            if (socios.length === 0) {
+                showToast('Adicione pelo menos um sócio!', 'warning');
+                return;
+            }
+
+            try {
+                const result = await apiRequest('/aniversariantes', 'PUT', { id, empresa, cnpj, socios });
+                if (result && result.success) {
+                    showToast('Registro atualizado com sucesso!', 'success');
+                    fecharModal();
+                    await carregarDados();
+                } else {
+                    showToast('Erro ao atualizar.', 'error');
+                }
+            } catch (error) {
+                // Erro já tratado
+            }
+        });
+    }
+
+    // ============================================
+    // EXCLUIR
+    // ============================================
+    async function excluirRegistro(id) {
+        if (!confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+        try {
+            const result = await apiRequest(`/aniversariantes?id=${id}`, 'DELETE');
+            if (result && result.success) {
+                showToast('Registro excluído com sucesso!', 'success');
+                await carregarDados();
+            } else {
+                showToast('Erro ao excluir.', 'error');
+            }
+        } catch (error) {
+            // Erro já tratado
+        }
+    }
+
+    // ============================================
+    // EXPORTAR CSV
+    // ============================================
+    const btnExportCSV = document.getElementById('btnExportCSV');
+    if (btnExportCSV) {
+        btnExportCSV.addEventListener('click', function() {
+            if (aniversariantes.length === 0) {
+                showToast('Não há dados para exportar!', 'warning');
+                return;
+            }
+
+            let csv = '\uFEFF';
+            csv += 'Empresa;CNPJ;Sócios;Nascimentos;Dias para Aniversário;Status\n';
+
+            aniversariantes.forEach(item => {
+                const sociosNomes = item.socios.map(s => s.nome || '').join(' | ');
+                const sociosDatas = item.socios.map(s => {
+                    if (!s.dataNasc) return '';
+                    const dt = new Date(s.dataNasc);
+                    return dt.toLocaleDateString('pt-BR');
+                }).join(' | ');
+                const sociosDias = item.socios.map(s => {
+                    const dias = calcularDiasAteAniversario(s.dataNasc);
+                    if (dias === null) return '';
+                    if (dias === 0) return 'HOJE!';
+                    return `${dias} dias`;
+                }).join(' | ');
+                const status = item.socios.some(s => isAniversarioHoje(s.dataNasc)) ? 'HOJE 🎉' :
+                              item.socios.some(s => isAniversarioProximo(s.dataNasc)) ? 'PRÓXIMO 📅' : '';
+
+                csv += `"${item.empresa || ''}";"${item.cnpj || ''}";"${sociosNomes}";"${sociosDatas}";"${sociosDias}";"${status}"\n`;
+            });
+
+            const data = new Date();
+            const dataStr = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+            const filename = `aniversariantes_aguia_contab_${dataStr}.csv`;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+            showToast('CSV exportado com sucesso!', 'success');
+        });
+    }
+
+    // ============================================
+    // REFRESH
+    // ============================================
+    const btnRefresh = document.getElementById('btnRefresh');
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+            this.disabled = true;
+            carregarDados().finally(() => {
+                this.innerHTML = '<i class="fas fa-sync"></i> Atualizar';
+                this.disabled = false;
+                showToast('Dados atualizados!', 'info');
+            });
+        });
+    }
+
+    // ============================================
+    // MASCARAS CNPJ (INPUTS)
+    // ============================================
+    const cnpjInput = document.getElementById('cnpj');
+    if (cnpjInput) {
+        cnpjInput.addEventListener('input', function() { mascaraCnpj(this); });
+    }
+    
+    const editCnpjInput = document.getElementById('editCnpj');
+    if (editCnpjInput) {
+        editCnpjInput.addEventListener('input', function() { mascaraCnpj(this); });
+    }
+
+    // ============================================
+    // INICIALIZAR
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        carregarDados();
+    });
+</script>
+
+</body>
+</html>
