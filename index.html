@@ -1224,790 +1224,791 @@
 
 <!-- JAVASCRIPT -->
 <script>
-    // ============================================
-    // CONFIGURAÇÃO
-    // ============================================
-    // ✅ URL CORRETA DO SEU SCRIPT
-   const API_URL = 'https://cors-anywhere.herokuapp.com/https://script.google.com/macros/s/AKfycbxkI5WtZrTMkzOLeZrtgYMxHpIE9uCaf0z6c-QK3XSPx8V_qtxsztVQ0a_J3ntGmHU/exec';
+ // ============================================
+// CONFIGURAÇÃO - URL DO GOOGLE APPS SCRIPT
+// ============================================
+// ✅ URL COM O PROXY CORS
+const API_URL = 'https://cors-anywhere.herokuapp.com/https://script.google.com/macros/s/AKfycbxkI5WtZrTMkzOLeZrtgYMxHpIE9uCaf0z6c-QK3XSPx8V_qtxsztVQ0a_J3ntGmHU/exec';
 
-    // ============================================
-    // ESTADO GLOBAL
-    // ============================================
-    let aniversariantes = [];
-    let socioCount = 1;
-    let editSocioCount = 1;
+// ============================================
+// ESTADO GLOBAL
+// ============================================
+let aniversariantes = [];
+let socioCount = 1;
+let editSocioCount = 1;
 
-    // ============================================
-    // FUNÇÕES DE DATA
-    // ============================================
-    function calcularDiasAteAniversario(dataNasc) {
-        if (!dataNasc) return null;
-        const hoje = new Date();
-        const nasc = new Date(dataNasc);
-        const aniversarioEsteAno = new Date(hoje.getFullYear(), nasc.getMonth(), nasc.getDate());
-        if (aniversarioEsteAno < hoje) {
-            aniversarioEsteAno.setFullYear(hoje.getFullYear() + 1);
-        }
-        const diffTime = aniversarioEsteAno - hoje;
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+// ============================================
+// FUNÇÕES DE DATA
+// ============================================
+function calcularDiasAteAniversario(dataNasc) {
+    if (!dataNasc) return null;
+    const hoje = new Date();
+    const nasc = new Date(dataNasc);
+    const aniversarioEsteAno = new Date(hoje.getFullYear(), nasc.getMonth(), nasc.getDate());
+    if (aniversarioEsteAno < hoje) {
+        aniversarioEsteAno.setFullYear(hoje.getFullYear() + 1);
     }
+    const diffTime = aniversarioEsteAno - hoje;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
 
-    function isAniversarioHoje(dataNasc) {
-        if (!dataNasc) return false;
-        const hoje = new Date();
-        const nasc = new Date(dataNasc);
-        return hoje.getDate() === nasc.getDate() && hoje.getMonth() === nasc.getMonth();
-    }
+function isAniversarioHoje(dataNasc) {
+    if (!dataNasc) return false;
+    const hoje = new Date();
+    const nasc = new Date(dataNasc);
+    return hoje.getDate() === nasc.getDate() && hoje.getMonth() === nasc.getMonth();
+}
 
-    function isAniversarioProximo(dataNasc, dias = 7) {
-        if (!dataNasc) return false;
-        const diff = calcularDiasAteAniversario(dataNasc);
-        return diff !== null && diff > 0 && diff <= dias;
-    }
+function isAniversarioProximo(dataNasc, dias = 7) {
+    if (!dataNasc) return false;
+    const diff = calcularDiasAteAniversario(dataNasc);
+    return diff !== null && diff > 0 && diff <= dias;
+}
 
-    function formatarDias(dias) {
-        if (dias === 0) return '🎉 HOJE';
-        if (dias === 1) return 'Amanhã';
-        return `${dias} dias`;
-    }
+function formatarDias(dias) {
+    if (dias === 0) return '🎉 HOJE';
+    if (dias === 1) return 'Amanhã';
+    return `${dias} dias`;
+}
 
-    // ============================================
-    // TOAST
-    // ============================================
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-exclamation-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        };
-        toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
-        container.appendChild(toast);
+// ============================================
+// TOAST (NOTIFICAÇÕES)
+// ============================================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100px)';
+        toast.style.transition = 'all 0.4s ease';
         setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100px)';
-            toast.style.transition = 'all 0.4s ease';
-            setTimeout(() => {
-                if (toast.parentNode) toast.remove();
-            }, 400);
-        }, 4500);
-    }
+            if (toast.parentNode) toast.remove();
+        }, 400);
+    }, 4500);
+}
 
-    // ============================================
-    // MÁSCARA CNPJ
-    // ============================================
-    function mascaraCnpj(input) {
-        let value = input.value.replace(/\D/g, '');
-        if (value.length > 14) value = value.slice(0, 14);
-        value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-        value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-        value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-        value = value.replace(/(\d{4})(\d)/, '$1-$2');
-        input.value = value;
-    }
+// ============================================
+// MÁSCARA CNPJ
+// ============================================
+function mascaraCnpj(input) {
+    let value = input.value.replace(/\D/g, '');
+    if (value.length > 14) value = value.slice(0, 14);
+    value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+    value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+    value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+    value = value.replace(/(\d{4})(\d)/, '$1-$2');
+    input.value = value;
+}
 
-    // ============================================
-    // SOCIOS
-    // ============================================
-    function addSocioForm(containerId, count) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const div = document.createElement('div');
-        div.className = 'socio-group';
-        div.dataset.socio = count;
-        div.innerHTML = `
-            <div class="socio-header">
-                <h4><i class="fas fa-user"></i> Sócio ${count}</h4>
-                <button type="button" class="btn-remove-socio" onclick="removerSocio(this, '${containerId}')">
-                    <i class="fas fa-times"></i> Remover
-                </button>
+// ============================================
+// FUNÇÕES DE SÓCIOS (FRONTEND)
+// ============================================
+function addSocioForm(containerId, count) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const div = document.createElement('div');
+    div.className = 'socio-group';
+    div.dataset.socio = count;
+    div.innerHTML = `
+        <div class="socio-header">
+            <h4><i class="fas fa-user"></i> Sócio ${count}</h4>
+            <button type="button" class="btn-remove-socio" onclick="removerSocio(this, '${containerId}')">
+                <i class="fas fa-times"></i> Remover
+            </button>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" class="socio-nome" placeholder="Nome do sócio">
             </div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" class="socio-nome" placeholder="Nome do sócio">
-                </div>
-                <div class="form-group">
-                    <label>Data de Nascimento</label>
-                    <input type="date" class="socio-data">
-                </div>
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" class="socio-data">
             </div>
-        `;
-        container.appendChild(div);
+        </div>
+    `;
+    container.appendChild(div);
+    reorganizarSocios(containerId);
+}
+
+function removerSocio(btn, containerId) {
+    const group = btn.closest('.socio-group');
+    const container = document.getElementById(containerId);
+    if (!container || !group) return;
+    if (container.children.length <= 1) {
+        showToast('O primeiro sócio é obrigatório!', 'warning');
+        return;
+    }
+    group.style.transition = 'all 0.3s ease';
+    group.style.opacity = '0';
+    group.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        group.remove();
         reorganizarSocios(containerId);
-    }
+    }, 300);
+}
 
-    function removerSocio(btn, containerId) {
-        const group = btn.closest('.socio-group');
-        const container = document.getElementById(containerId);
-        if (!container || !group) return;
-        if (container.children.length <= 1) {
-            showToast('O primeiro sócio é obrigatório!', 'warning');
-            return;
+function reorganizarSocios(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const socios = container.querySelectorAll('.socio-group');
+    socios.forEach((el, idx) => {
+        const num = idx + 1;
+        el.dataset.socio = num;
+        const header = el.querySelector('.socio-header h4');
+        if (header) {
+            header.innerHTML = `<i class="fas fa-user"></i> Sócio ${num}`;
         }
-        group.style.transition = 'all 0.3s ease';
-        group.style.opacity = '0';
-        group.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            group.remove();
-            reorganizarSocios(containerId);
-        }, 300);
-    }
-
-    function reorganizarSocios(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const socios = container.querySelectorAll('.socio-group');
-        socios.forEach((el, idx) => {
-            const num = idx + 1;
-            el.dataset.socio = num;
-            const header = el.querySelector('.socio-header h4');
-            if (header) {
-                header.innerHTML = `<i class="fas fa-user"></i> Sócio ${num}`;
-            }
-            if (num === 1) {
-                const removeBtn = el.querySelector('.btn-remove-socio');
-                if (removeBtn) removeBtn.style.display = 'none';
-            } else {
-                let removeBtn = el.querySelector('.btn-remove-socio');
-                if (!removeBtn) {
-                    const headerDiv = el.querySelector('.socio-header');
-                    if (headerDiv) {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'btn-remove-socio';
-                        btn.innerHTML = '<i class="fas fa-times"></i> Remover';
-                        btn.onclick = function() { removerSocio(this, containerId); };
-                        headerDiv.appendChild(btn);
-                    }
-                } else {
-                    removeBtn.style.display = 'inline-block';
+        if (num === 1) {
+            const removeBtn = el.querySelector('.btn-remove-socio');
+            if (removeBtn) removeBtn.style.display = 'none';
+        } else {
+            let removeBtn = el.querySelector('.btn-remove-socio');
+            if (!removeBtn) {
+                const headerDiv = el.querySelector('.socio-header');
+                if (headerDiv) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-remove-socio';
+                    btn.innerHTML = '<i class="fas fa-times"></i> Remover';
+                    btn.onclick = function() { removerSocio(this, containerId); };
+                    headerDiv.appendChild(btn);
                 }
-            }
-        });
-    }
-
-    // ============================================
-    // API
-    // ============================================
-    async function apiRequest(endpoint, method = 'GET', data = null) {
-        const url = `${API_URL}${endpoint}`;
-        const options = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            mode: 'cors',
-        };
-        if (data) {
-            options.body = JSON.stringify(data);
-        }
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            showToast('Erro na comunicação com o servidor. Verifique sua conexão.', 'error');
-            throw error;
-        }
-    }
-
-    // ============================================
-    // CARREGAR DADOS
-    // ============================================
-    async function carregarDados() {
-        try {
-            const result = await apiRequest('/aniversariantes', 'GET');
-            if (result.success) {
-                aniversariantes = result.data || [];
             } else {
-                aniversariantes = [];
-                showToast('Erro ao carregar dados: ' + (result.message || ''), 'error');
+                removeBtn.style.display = 'inline-block';
             }
-        } catch (error) {
-            aniversariantes = [];
         }
-        ordenarPorProximosAniversarios();
-        renderizarTabela(aniversariantes);
-        atualizarContadores();
-        atualizarBannerHoje();
+    });
+}
+
+// ============================================
+// API - REQUISIÇÕES (COM HEADER CORRETO)
+// ============================================
+async function apiRequest(endpoint, method = 'GET', data = null) {
+    const url = `${API_URL}${endpoint}`;
+    const options = {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest' // ✅ HEADER OBRIGATÓRIO PARA O CORS-ANYWHERE
+        },
+        mode: 'cors',
+    };
+    if (data) {
+        options.body = JSON.stringify(data);
+    }
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        showToast('Erro na comunicação com o servidor. Verifique sua conexão.', 'error');
+        throw error;
+    }
+}
+
+// ============================================
+// CARREGAR DADOS DA PLANILHA
+// ============================================
+async function carregarDados() {
+    try {
+        const result = await apiRequest('/aniversariantes', 'GET');
+        if (result.success) {
+            aniversariantes = result.data || [];
+        } else {
+            aniversariantes = [];
+            showToast('Erro ao carregar dados: ' + (result.message || ''), 'error');
+        }
+    } catch (error) {
+        aniversariantes = [];
+    }
+    ordenarPorProximosAniversarios();
+    renderizarTabela(aniversariantes);
+    atualizarContadores();
+    atualizarBannerHoje();
+}
+
+// ============================================
+// ORDENAR POR PRÓXIMOS ANIVERSÁRIOS
+// ============================================
+function ordenarPorProximosAniversarios() {
+    aniversariantes.sort((a, b) => {
+        const diasA = Math.min(...a.socios.map(s => calcularDiasAteAniversario(s.dataNasc) || 999));
+        const diasB = Math.min(...b.socios.map(s => calcularDiasAteAniversario(s.dataNasc) || 999));
+        return diasA - diasB;
+    });
+}
+
+// ============================================
+// BANNER - ANIVERSARIANTES DO DIA
+// ============================================
+function atualizarBannerHoje() {
+    const banner = document.getElementById('bannerHoje');
+    const container = document.getElementById('bannerSocios');
+    if (!banner || !container) return;
+    
+    const hoje = new Date();
+    const aniversariantesHoje = aniversariantes.filter(item =>
+        item.socios.some(s => {
+            if (!s.dataNasc) return false;
+            const dt = new Date(s.dataNasc);
+            return dt.getDate() === hoje.getDate() && dt.getMonth() === hoje.getMonth();
+        })
+    );
+
+    if (aniversariantesHoje.length === 0) {
+        banner.classList.remove('ativo');
+        return;
     }
 
-    // ============================================
-    // ORDENAR
-    // ============================================
-    function ordenarPorProximosAniversarios() {
-        aniversariantes.sort((a, b) => {
-            const diasA = Math.min(...a.socios.map(s => calcularDiasAteAniversario(s.dataNasc) || 999));
-            const diasB = Math.min(...b.socios.map(s => calcularDiasAteAniversario(s.dataNasc) || 999));
-            return diasA - diasB;
+    banner.classList.add('ativo');
+    
+    let html = '';
+    aniversariantesHoje.forEach(item => {
+        item.socios.forEach(s => {
+            if (isAniversarioHoje(s.dataNasc)) {
+                const initials = s.nome ? s.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+                html += `
+                    <div class="banner-socio-card">
+                        <div class="avatar">${initials}</div>
+                        <div class="info">
+                            <div class="nome">${s.nome || 'Sócio'}</div>
+                            <div class="empresa">${item.empresa || 'Empresa'}</div>
+                        </div>
+                    </div>
+                `;
+            }
         });
+    });
+    container.innerHTML = html;
+}
+
+// ============================================
+// RENDERIZAR TABELA
+// ============================================
+function renderizarTabela(data) {
+    const tbody = document.getElementById('tableBody');
+    const badge = document.getElementById('totalBadge');
+    if (!tbody) return;
+    
+    if (badge) badge.textContent = data.length;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Nenhum aniversariante cadastrado</h3>
+                        <p>Comece agora! Adicione um novo aniversariante usando o formulário acima.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
     }
 
-    // ============================================
-    // BANNER
-    // ============================================
-    function atualizarBannerHoje() {
-        const banner = document.getElementById('bannerHoje');
-        const container = document.getElementById('bannerSocios');
-        if (!banner || !container) return;
-        
-        const hoje = new Date();
-        const aniversariantesHoje = aniversariantes.filter(item =>
+    let html = '';
+    data.forEach((item, index) => {
+        let rowClass = '';
+        let statusBadge = '';
+        let statusIcon = '';
+
+        const sociosComStatus = item.socios.map(s => {
+            const dias = calcularDiasAteAniversario(s.dataNasc);
+            const hoje = isAniversarioHoje(s.dataNasc);
+            const proximo = isAniversarioProximo(s.dataNasc);
+            return { ...s, dias, hoje, proximo };
+        });
+
+        sociosComStatus.sort((a, b) => (a.dias || 999) - (b.dias || 999));
+
+        const primeiro = sociosComStatus[0];
+        if (primeiro) {
+            if (primeiro.hoje) {
+                rowClass = 'row-hoje';
+                statusBadge = '<span class="badge-hoje">🎉 HOJE!</span>';
+                statusIcon = '🎉';
+            } else if (primeiro.proximo) {
+                rowClass = 'row-proximo';
+                statusBadge = `<span class="badge-proximo">📅 ${formatarDias(primeiro.dias)}</span>`;
+                statusIcon = '📅';
+            }
+        }
+
+        const sociosHtml = sociosComStatus.map((s, i) => {
+            const dt = s.dataNasc ? new Date(s.dataNasc) : null;
+            const dataStr = dt ? dt.toLocaleDateString('pt-BR') : '-';
+            let corClass = '';
+            let label = '';
+            if (s.hoje) {
+                corClass = 'hoje';
+                label = '🎉 HOJE';
+            } else if (s.proximo) {
+                corClass = 'proximo';
+                label = `📅 ${formatarDias(s.dias)}`;
+            }
+            return `
+                <div class="socio-item">
+                    <span><strong>${i+1}.</strong> ${s.nome || '-'} <span style="color:#999;font-size:12px;">${dataStr}</span></span>
+                    <span class="dias ${corClass}">${label}</span>
+                </div>
+            `;
+        }).join('');
+
+        html += `
+            <tr class="${rowClass}">
+                <td>${index + 1}</td>
+                <td>
+                    <strong>${item.empresa || '-'}</strong>
+                    <br>${statusBadge}
+                </td>
+                <td>${item.cnpj || '-'}</td>
+                <td><div class="socios-list">${sociosHtml}</div></td>
+                <td style="text-align:center;font-size:22px;">${statusIcon}</td>
+                <td>
+                    <div class="acoes">
+                        <button class="btn btn-primary btn-sm btn-icon" onclick="abrirModalEditar(${item.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm btn-icon" onclick="excluirRegistro(${item.id})" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+// ============================================
+// CONTADORES
+// ============================================
+function atualizarContadores() {
+    const hoje = new Date();
+    const totalEl = document.getElementById('totalContador');
+    const mesEl = document.getElementById('mesContador');
+    const hojeEl = document.getElementById('hojeContador');
+    
+    if (totalEl) totalEl.textContent = aniversariantes.length;
+
+    if (mesEl) {
+        const mesAtual = hoje.getMonth();
+        const countMes = aniversariantes.filter(item =>
+            item.socios.some(s => {
+                if (!s.dataNasc) return false;
+                const dt = new Date(s.dataNasc);
+                return dt.getMonth() === mesAtual;
+            })
+        ).length;
+        mesEl.textContent = countMes;
+    }
+
+    if (hojeEl) {
+        const countHoje = aniversariantes.filter(item =>
             item.socios.some(s => {
                 if (!s.dataNasc) return false;
                 const dt = new Date(s.dataNasc);
                 return dt.getDate() === hoje.getDate() && dt.getMonth() === hoje.getMonth();
             })
-        );
+        ).length;
+        hojeEl.textContent = countHoje;
+    }
+}
 
-        if (aniversariantesHoje.length === 0) {
-            banner.classList.remove('ativo');
+// ============================================
+// BUSCA
+// ============================================
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const term = this.value.toLowerCase().trim();
+        if (!term) {
+            renderizarTabela(aniversariantes);
             return;
         }
-
-        banner.classList.add('ativo');
-        
-        let html = '';
-        aniversariantesHoje.forEach(item => {
-            item.socios.forEach(s => {
-                if (isAniversarioHoje(s.dataNasc)) {
-                    const initials = s.nome ? s.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
-                    html += `
-                        <div class="banner-socio-card">
-                            <div class="avatar">${initials}</div>
-                            <div class="info">
-                                <div class="nome">${s.nome || 'Sócio'}</div>
-                                <div class="empresa">${item.empresa || 'Empresa'}</div>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
+        const filtered = aniversariantes.filter(item => {
+            const empresaMatch = (item.empresa || '').toLowerCase().includes(term);
+            const socioMatch = item.socios.some(s => (s.nome || '').toLowerCase().includes(term));
+            return empresaMatch || socioMatch;
         });
-        container.innerHTML = html;
-    }
+        renderizarTabela(filtered);
+    });
+}
 
-    // ============================================
-    // RENDERIZAR TABELA
-    // ============================================
-    function renderizarTabela(data) {
-        const tbody = document.getElementById('tableBody');
-        const badge = document.getElementById('totalBadge');
-        if (!tbody) return;
-        
-        if (badge) badge.textContent = data.length;
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6">
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <h3>Nenhum aniversariante cadastrado</h3>
-                            <p>Comece agora! Adicione um novo aniversariante usando o formulário acima.</p>
-                        </div>
-                    </td>
-                </tr>
-            `;
-            return;
+// ============================================
+// FORMULÁRIO - ADICIONAR/EDITAR
+// ============================================
+const formAniversariante = document.getElementById('formAniversariante');
+if (formAniversariante) {
+    formAniversariante.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmit');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
         }
 
-        let html = '';
-        data.forEach((item, index) => {
-            let rowClass = '';
-            let statusBadge = '';
-            let statusIcon = '';
+        const empresa = document.getElementById('empresa');
+        const cnpj = document.getElementById('cnpj');
+        const editId = document.getElementById('editId');
 
-            const sociosComStatus = item.socios.map(s => {
-                const dias = calcularDiasAteAniversario(s.dataNasc);
-                const hoje = isAniversarioHoje(s.dataNasc);
-                const proximo = isAniversarioProximo(s.dataNasc);
-                return { ...s, dias, hoje, proximo };
-            });
-
-            sociosComStatus.sort((a, b) => (a.dias || 999) - (b.dias || 999));
-
-            const primeiro = sociosComStatus[0];
-            if (primeiro) {
-                if (primeiro.hoje) {
-                    rowClass = 'row-hoje';
-                    statusBadge = '<span class="badge-hoje">🎉 HOJE!</span>';
-                    statusIcon = '🎉';
-                } else if (primeiro.proximo) {
-                    rowClass = 'row-proximo';
-                    statusBadge = `<span class="badge-proximo">📅 ${formatarDias(primeiro.dias)}</span>`;
-                    statusIcon = '📅';
+        const socioGroups = document.querySelectorAll('#sociosContainer .socio-group');
+        const socios = [];
+        socioGroups.forEach(group => {
+            const nome = group.querySelector('.socio-nome');
+            const data = group.querySelector('.socio-data');
+            if (nome && data) {
+                const nomeVal = nome.value.trim();
+                const dataVal = data.value;
+                if (nomeVal || dataVal) {
+                    socios.push({ nome: nomeVal, dataNasc: dataVal });
                 }
             }
-
-            const sociosHtml = sociosComStatus.map((s, i) => {
-                const dt = s.dataNasc ? new Date(s.dataNasc) : null;
-                const dataStr = dt ? dt.toLocaleDateString('pt-BR') : '-';
-                let corClass = '';
-                let label = '';
-                if (s.hoje) {
-                    corClass = 'hoje';
-                    label = '🎉 HOJE';
-                } else if (s.proximo) {
-                    corClass = 'proximo';
-                    label = `📅 ${formatarDias(s.dias)}`;
-                }
-                return `
-                    <div class="socio-item">
-                        <span><strong>${i+1}.</strong> ${s.nome || '-'} <span style="color:#999;font-size:12px;">${dataStr}</span></span>
-                        <span class="dias ${corClass}">${label}</span>
-                    </div>
-                `;
-            }).join('');
-
-            html += `
-                <tr class="${rowClass}">
-                    <td>${index + 1}</td>
-                    <td>
-                        <strong>${item.empresa || '-'}</strong>
-                        <br>${statusBadge}
-                    </td>
-                    <td>${item.cnpj || '-'}</td>
-                    <td><div class="socios-list">${sociosHtml}</div></td>
-                    <td style="text-align:center;font-size:22px;">${statusIcon}</td>
-                    <td>
-                        <div class="acoes">
-                            <button class="btn btn-primary btn-sm btn-icon" onclick="abrirModalEditar(${item.id})" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-danger btn-sm btn-icon" onclick="excluirRegistro(${item.id})" title="Excluir">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
         });
 
-        tbody.innerHTML = html;
-    }
-
-    // ============================================
-    // CONTADORES
-    // ============================================
-    function atualizarContadores() {
-        const hoje = new Date();
-        const totalEl = document.getElementById('totalContador');
-        const mesEl = document.getElementById('mesContador');
-        const hojeEl = document.getElementById('hojeContador');
-        
-        if (totalEl) totalEl.textContent = aniversariantes.length;
-
-        if (mesEl) {
-            const mesAtual = hoje.getMonth();
-            const countMes = aniversariantes.filter(item =>
-                item.socios.some(s => {
-                    if (!s.dataNasc) return false;
-                    const dt = new Date(s.dataNasc);
-                    return dt.getMonth() === mesAtual;
-                })
-            ).length;
-            mesEl.textContent = countMes;
-        }
-
-        if (hojeEl) {
-            const countHoje = aniversariantes.filter(item =>
-                item.socios.some(s => {
-                    if (!s.dataNasc) return false;
-                    const dt = new Date(s.dataNasc);
-                    return dt.getDate() === hoje.getDate() && dt.getMonth() === hoje.getMonth();
-                })
-            ).length;
-            hojeEl.textContent = countHoje;
-        }
-    }
-
-    // ============================================
-    // BUSCA
-    // ============================================
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const term = this.value.toLowerCase().trim();
-            if (!term) {
-                renderizarTabela(aniversariantes);
-                return;
-            }
-            const filtered = aniversariantes.filter(item => {
-                const empresaMatch = (item.empresa || '').toLowerCase().includes(term);
-                const socioMatch = item.socios.some(s => (s.nome || '').toLowerCase().includes(term));
-                return empresaMatch || socioMatch;
-            });
-            renderizarTabela(filtered);
-        });
-    }
-
-    // ============================================
-    // FORMULÁRIO
-    // ============================================
-    const formAniversariante = document.getElementById('formAniversariante');
-    if (formAniversariante) {
-        formAniversariante.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmit');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-            }
-
-            const empresa = document.getElementById('empresa');
-            const cnpj = document.getElementById('cnpj');
-            const editId = document.getElementById('editId');
-
-            const socioGroups = document.querySelectorAll('#sociosContainer .socio-group');
-            const socios = [];
-            socioGroups.forEach(group => {
-                const nome = group.querySelector('.socio-nome');
-                const data = group.querySelector('.socio-data');
-                if (nome && data) {
-                    const nomeVal = nome.value.trim();
-                    const dataVal = data.value;
-                    if (nomeVal || dataVal) {
-                        socios.push({ nome: nomeVal, dataNasc: dataVal });
-                    }
-                }
-            });
-
-            if (socios.length === 0) {
-                showToast('Adicione pelo menos um sócio!', 'warning');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
-                }
-                return;
-            }
-
-            const data = { 
-                empresa: empresa ? empresa.value.trim() : '', 
-                cnpj: cnpj ? cnpj.value.trim() : '', 
-                socios 
-            };
-
-            try {
-                let result;
-                if (editId && editId.value) {
-                    data.id = parseInt(editId.value);
-                    result = await apiRequest('/aniversariantes', 'PUT', data);
-                } else {
-                    result = await apiRequest('/aniversariantes', 'POST', data);
-                }
-                if (result && result.success) {
-                    showToast(editId && editId.value ? 'Registro atualizado com sucesso!' : 'Registro adicionado com sucesso!', 'success');
-                    resetarFormulario();
-                    await carregarDados();
-                } else {
-                    showToast('Erro: ' + (result?.message || 'Operação falhou'), 'error');
-                }
-            } catch (error) {}
-
+        if (socios.length === 0) {
+            showToast('Adicione pelo menos um sócio!', 'warning');
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-save"></i> <span id="btnSubmitText">Salvar</span>';
+                btn.innerHTML = '<i class="fas fa-save"></i> Salvar';
             }
-        });
+            return;
+        }
+
+        const data = { 
+            empresa: empresa ? empresa.value.trim() : '', 
+            cnpj: cnpj ? cnpj.value.trim() : '', 
+            socios 
+        };
+
+        try {
+            let result;
+            if (editId && editId.value) {
+                data.id = parseInt(editId.value);
+                result = await apiRequest('/aniversariantes', 'PUT', data);
+            } else {
+                result = await apiRequest('/aniversariantes', 'POST', data);
+            }
+            if (result && result.success) {
+                showToast(editId && editId.value ? 'Registro atualizado com sucesso!' : 'Registro adicionado com sucesso!', 'success');
+                resetarFormulario();
+                await carregarDados();
+            } else {
+                showToast('Erro: ' + (result?.message || 'Operação falhou'), 'error');
+            }
+        } catch (error) {}
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> <span id="btnSubmitText">Salvar</span>';
+        }
+    });
+}
+
+function resetarFormulario() {
+    const form = document.getElementById('formAniversariante');
+    if (form) form.reset();
+    
+    const editId = document.getElementById('editId');
+    if (editId) editId.value = '';
+    
+    const btnText = document.getElementById('btnSubmitText');
+    if (btnText) btnText.textContent = 'Salvar';
+    
+    const formTitle = document.getElementById('formTitle');
+    if (formTitle) formTitle.textContent = 'Adicionar Aniversariante';
+    
+    const btnCancelar = document.getElementById('btnCancelar');
+    if (btnCancelar) btnCancelar.style.display = 'none';
+    
+    const container = document.getElementById('sociosContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="socio-group" data-socio="1">
+                <div class="socio-header">
+                    <h4><i class="fas fa-user"></i> Sócio 1 <span class="required">*</span></h4>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" class="socio-nome" placeholder="Nome do sócio" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" class="socio-data" required>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    socioCount = 1;
+    
+    const cnpj = document.getElementById('cnpj');
+    if (cnpj) cnpj.value = '';
+}
+
+// ============================================
+// BOTÃO CANCELAR
+// ============================================
+const btnCancelar = document.getElementById('btnCancelar');
+if (btnCancelar) {
+    btnCancelar.addEventListener('click', resetarFormulario);
+}
+
+// ============================================
+// BOTÃO ADICIONAR SÓCIO
+// ============================================
+const btnAddSocio = document.getElementById('btnAddSocio');
+if (btnAddSocio) {
+    btnAddSocio.addEventListener('click', function() {
+        socioCount++;
+        addSocioForm('sociosContainer', socioCount);
+    });
+}
+
+// ============================================
+// MODAL - EDITAR
+// ============================================
+function abrirModalEditar(id) {
+    const item = aniversariantes.find(a => a.id === id);
+    if (!item) {
+        showToast('Registro não encontrado!', 'error');
+        return;
     }
 
-    function resetarFormulario() {
-        const form = document.getElementById('formAniversariante');
-        if (form) form.reset();
-        
-        const editId = document.getElementById('editId');
-        if (editId) editId.value = '';
-        
-        const btnText = document.getElementById('btnSubmitText');
-        if (btnText) btnText.textContent = 'Salvar';
-        
-        const formTitle = document.getElementById('formTitle');
-        if (formTitle) formTitle.textContent = 'Adicionar Aniversariante';
-        
-        const btnCancelar = document.getElementById('btnCancelar');
-        if (btnCancelar) btnCancelar.style.display = 'none';
-        
-        const container = document.getElementById('sociosContainer');
-        if (container) {
-            container.innerHTML = `
-                <div class="socio-group" data-socio="1">
-                    <div class="socio-header">
-                        <h4><i class="fas fa-user"></i> Sócio 1 <span class="required">*</span></h4>
+    const editIdModal = document.getElementById('editIdModal');
+    const editEmpresa = document.getElementById('editEmpresa');
+    const editCnpj = document.getElementById('editCnpj');
+    const container = document.getElementById('editSociosContainer');
+    
+    if (editIdModal) editIdModal.value = id;
+    if (editEmpresa) editEmpresa.value = item.empresa || '';
+    if (editCnpj) editCnpj.value = item.cnpj || '';
+
+    if (container) {
+        container.innerHTML = '';
+        editSocioCount = 0;
+
+        item.socios.forEach((s, i) => {
+            const num = i + 1;
+            editSocioCount = num;
+            const div = document.createElement('div');
+            div.className = 'socio-group';
+            div.dataset.socio = num;
+            const btnRemove = num > 1 ? `
+                <button type="button" class="btn-remove-socio" onclick="removerSocio(this, 'editSociosContainer')">
+                    <i class="fas fa-times"></i> Remover
+                </button>
+            ` : '';
+            div.innerHTML = `
+                <div class="socio-header">
+                    <h4><i class="fas fa-user"></i> Sócio ${num}</h4>
+                    ${btnRemove}
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" class="socio-nome" value="${s.nome || ''}" placeholder="Nome do sócio">
                     </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nome Completo</label>
-                            <input type="text" class="socio-nome" placeholder="Nome do sócio" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Data de Nascimento</label>
-                            <input type="date" class="socio-data" required>
-                        </div>
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" class="socio-data" value="${s.dataNasc || ''}">
                     </div>
                 </div>
             `;
-        }
-        socioCount = 1;
-        
-        const cnpj = document.getElementById('cnpj');
-        if (cnpj) cnpj.value = '';
-    }
-
-    // ============================================
-    // BOTÃO CANCELAR
-    // ============================================
-    const btnCancelar = document.getElementById('btnCancelar');
-    if (btnCancelar) {
-        btnCancelar.addEventListener('click', resetarFormulario);
-    }
-
-    // ============================================
-    // BOTÃO ADICIONAR SÓCIO
-    // ============================================
-    const btnAddSocio = document.getElementById('btnAddSocio');
-    if (btnAddSocio) {
-        btnAddSocio.addEventListener('click', function() {
-            socioCount++;
-            addSocioForm('sociosContainer', socioCount);
+            container.appendChild(div);
         });
     }
 
-    // ============================================
-    // MODAL
-    // ============================================
-    function abrirModalEditar(id) {
-        const item = aniversariantes.find(a => a.id === id);
-        if (!item) {
-            showToast('Registro não encontrado!', 'error');
-            return;
-        }
+    const modal = document.getElementById('modalEdit');
+    if (modal) modal.classList.add('active');
+}
 
-        const editIdModal = document.getElementById('editIdModal');
-        const editEmpresa = document.getElementById('editEmpresa');
-        const editCnpj = document.getElementById('editCnpj');
-        const container = document.getElementById('editSociosContainer');
-        
-        if (editIdModal) editIdModal.value = id;
-        if (editEmpresa) editEmpresa.value = item.empresa || '';
-        if (editCnpj) editCnpj.value = item.cnpj || '';
+function fecharModal() {
+    const modal = document.getElementById('modalEdit');
+    if (modal) modal.classList.remove('active');
+}
 
-        if (container) {
-            container.innerHTML = '';
-            editSocioCount = 0;
+const modalEdit = document.getElementById('modalEdit');
+if (modalEdit) {
+    modalEdit.addEventListener('click', function(e) {
+        if (e.target === this) fecharModal();
+    });
+}
 
-            item.socios.forEach((s, i) => {
-                const num = i + 1;
-                editSocioCount = num;
-                const div = document.createElement('div');
-                div.className = 'socio-group';
-                div.dataset.socio = num;
-                const btnRemove = num > 1 ? `
-                    <button type="button" class="btn-remove-socio" onclick="removerSocio(this, 'editSociosContainer')">
-                        <i class="fas fa-times"></i> Remover
-                    </button>
-                ` : '';
-                div.innerHTML = `
-                    <div class="socio-header">
-                        <h4><i class="fas fa-user"></i> Sócio ${num}</h4>
-                        ${btnRemove}
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Nome Completo</label>
-                            <input type="text" class="socio-nome" value="${s.nome || ''}" placeholder="Nome do sócio">
-                        </div>
-                        <div class="form-group">
-                            <label>Data de Nascimento</label>
-                            <input type="date" class="socio-data" value="${s.dataNasc || ''}">
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
+// ============================================
+// BOTÃO ADICIONAR SÓCIO (MODAL)
+// ============================================
+const btnAddSocioEdit = document.getElementById('btnAddSocioEdit');
+if (btnAddSocioEdit) {
+    btnAddSocioEdit.addEventListener('click', function() {
+        editSocioCount++;
+        addSocioForm('editSociosContainer', editSocioCount);
+    });
+}
 
-        const modal = document.getElementById('modalEdit');
-        if (modal) modal.classList.add('active');
-    }
+// ============================================
+// FORMULÁRIO - EDITAR (MODAL)
+// ============================================
+const formEdit = document.getElementById('formEdit');
+if (formEdit) {
+    formEdit.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = parseInt(document.getElementById('editIdModal')?.value || '0');
+        const empresa = document.getElementById('editEmpresa')?.value.trim() || '';
+        const cnpj = document.getElementById('editCnpj')?.value.trim() || '';
 
-    function fecharModal() {
-        const modal = document.getElementById('modalEdit');
-        if (modal) modal.classList.remove('active');
-    }
-
-    const modalEdit = document.getElementById('modalEdit');
-    if (modalEdit) {
-        modalEdit.addEventListener('click', function(e) {
-            if (e.target === this) fecharModal();
-        });
-    }
-
-    // ============================================
-    // BOTÃO ADICIONAR SÓCIO (MODAL)
-    // ============================================
-    const btnAddSocioEdit = document.getElementById('btnAddSocioEdit');
-    if (btnAddSocioEdit) {
-        btnAddSocioEdit.addEventListener('click', function() {
-            editSocioCount++;
-            addSocioForm('editSociosContainer', editSocioCount);
-        });
-    }
-
-    // ============================================
-    // FORMULÁRIO EDITAR
-    // ============================================
-    const formEdit = document.getElementById('formEdit');
-    if (formEdit) {
-        formEdit.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('editIdModal')?.value || '0');
-            const empresa = document.getElementById('editEmpresa')?.value.trim() || '';
-            const cnpj = document.getElementById('editCnpj')?.value.trim() || '';
-
-            const socioGroups = document.querySelectorAll('#editSociosContainer .socio-group');
-            const socios = [];
-            socioGroups.forEach(group => {
-                const nome = group.querySelector('.socio-nome');
-                const data = group.querySelector('.socio-data');
-                if (nome && data) {
-                    const nomeVal = nome.value.trim();
-                    const dataVal = data.value;
-                    if (nomeVal || dataVal) {
-                        socios.push({ nome: nomeVal, dataNasc: dataVal });
-                    }
+        const socioGroups = document.querySelectorAll('#editSociosContainer .socio-group');
+        const socios = [];
+        socioGroups.forEach(group => {
+            const nome = group.querySelector('.socio-nome');
+            const data = group.querySelector('.socio-data');
+            if (nome && data) {
+                const nomeVal = nome.value.trim();
+                const dataVal = data.value;
+                if (nomeVal || dataVal) {
+                    socios.push({ nome: nomeVal, dataNasc: dataVal });
                 }
-            });
-
-            if (socios.length === 0) {
-                showToast('Adicione pelo menos um sócio!', 'warning');
-                return;
             }
-
-            try {
-                const result = await apiRequest('/aniversariantes', 'PUT', { id, empresa, cnpj, socios });
-                if (result && result.success) {
-                    showToast('Registro atualizado com sucesso!', 'success');
-                    fecharModal();
-                    await carregarDados();
-                } else {
-                    showToast('Erro ao atualizar.', 'error');
-                }
-            } catch (error) {}
         });
-    }
 
-    // ============================================
-    // EXCLUIR
-    // ============================================
-    async function excluirRegistro(id) {
-        if (!confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.')) {
+        if (socios.length === 0) {
+            showToast('Adicione pelo menos um sócio!', 'warning');
             return;
         }
+
         try {
-            const result = await apiRequest(`/aniversariantes?id=${id}`, 'DELETE');
+            const result = await apiRequest('/aniversariantes', 'PUT', { id, empresa, cnpj, socios });
             if (result && result.success) {
-                showToast('Registro excluído com sucesso!', 'success');
+                showToast('Registro atualizado com sucesso!', 'success');
+                fecharModal();
                 await carregarDados();
             } else {
-                showToast('Erro ao excluir.', 'error');
+                showToast('Erro ao atualizar.', 'error');
             }
         } catch (error) {}
-    }
-
-    // ============================================
-    // EXPORTAR CSV
-    // ============================================
-    const btnExportCSV = document.getElementById('btnExportCSV');
-    if (btnExportCSV) {
-        btnExportCSV.addEventListener('click', function() {
-            if (aniversariantes.length === 0) {
-                showToast('Não há dados para exportar!', 'warning');
-                return;
-            }
-
-            let csv = '\uFEFF';
-            csv += 'Empresa;CNPJ;Sócios;Nascimentos;Dias para Aniversário;Status\n';
-
-            aniversariantes.forEach(item => {
-                const sociosNomes = item.socios.map(s => s.nome || '').join(' | ');
-                const sociosDatas = item.socios.map(s => {
-                    if (!s.dataNasc) return '';
-                    const dt = new Date(s.dataNasc);
-                    return dt.toLocaleDateString('pt-BR');
-                }).join(' | ');
-                const sociosDias = item.socios.map(s => {
-                    const dias = calcularDiasAteAniversario(s.dataNasc);
-                    if (dias === null) return '';
-                    if (dias === 0) return 'HOJE!';
-                    return `${dias} dias`;
-                }).join(' | ');
-                const status = item.socios.some(s => isAniversarioHoje(s.dataNasc)) ? 'HOJE 🎉' :
-                              item.socios.some(s => isAniversarioProximo(s.dataNasc)) ? 'PRÓXIMO 📅' : '';
-
-                csv += `"${item.empresa || ''}";"${item.cnpj || ''}";"${sociosNomes}";"${sociosDatas}";"${sociosDias}";"${status}"\n`;
-            });
-
-            const data = new Date();
-            const dataStr = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
-            const filename = `aniversariantes_aguia_contab_${dataStr}.csv`;
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-
-            showToast('CSV exportado com sucesso!', 'success');
-        });
-    }
-
-    // ============================================
-    // REFRESH
-    // ============================================
-    const btnRefresh = document.getElementById('btnRefresh');
-    if (btnRefresh) {
-        btnRefresh.addEventListener('click', function() {
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
-            this.disabled = true;
-            carregarDados().finally(() => {
-                this.innerHTML = '<i class="fas fa-sync"></i> Atualizar';
-                this.disabled = false;
-                showToast('Dados atualizados!', 'info');
-            });
-        });
-    }
-
-    // ============================================
-    // MASCARAS
-    // ============================================
-    const cnpjInput = document.getElementById('cnpj');
-    if (cnpjInput) {
-        cnpjInput.addEventListener('input', function() { mascaraCnpj(this); });
-    }
-    
-    const editCnpjInput = document.getElementById('editCnpj');
-    if (editCnpjInput) {
-        editCnpjInput.addEventListener('input', function() { mascaraCnpj(this); });
-    }
-
-    // ============================================
-    // INICIALIZAR
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        carregarDados();
     });
+}
+
+// ============================================
+// EXCLUIR REGISTRO
+// ============================================
+async function excluirRegistro(id) {
+    if (!confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+    try {
+        const result = await apiRequest(`/aniversariantes?id=${id}`, 'DELETE');
+        if (result && result.success) {
+            showToast('Registro excluído com sucesso!', 'success');
+            await carregarDados();
+        } else {
+            showToast('Erro ao excluir.', 'error');
+        }
+    } catch (error) {}
+}
+
+// ============================================
+// EXPORTAR CSV
+// ============================================
+const btnExportCSV = document.getElementById('btnExportCSV');
+if (btnExportCSV) {
+    btnExportCSV.addEventListener('click', function() {
+        if (aniversariantes.length === 0) {
+            showToast('Não há dados para exportar!', 'warning');
+            return;
+        }
+
+        let csv = '\uFEFF';
+        csv += 'Empresa;CNPJ;Sócios;Nascimentos;Dias para Aniversário;Status\n';
+
+        aniversariantes.forEach(item => {
+            const sociosNomes = item.socios.map(s => s.nome || '').join(' | ');
+            const sociosDatas = item.socios.map(s => {
+                if (!s.dataNasc) return '';
+                const dt = new Date(s.dataNasc);
+                return dt.toLocaleDateString('pt-BR');
+            }).join(' | ');
+            const sociosDias = item.socios.map(s => {
+                const dias = calcularDiasAteAniversario(s.dataNasc);
+                if (dias === null) return '';
+                if (dias === 0) return 'HOJE!';
+                return `${dias} dias`;
+            }).join(' | ');
+            const status = item.socios.some(s => isAniversarioHoje(s.dataNasc)) ? 'HOJE 🎉' :
+                          item.socios.some(s => isAniversarioProximo(s.dataNasc)) ? 'PRÓXIMO 📅' : '';
+
+            csv += `"${item.empresa || ''}";"${item.cnpj || ''}";"${sociosNomes}";"${sociosDatas}";"${sociosDias}";"${status}"\n`;
+        });
+
+        const data = new Date();
+        const dataStr = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+        const filename = `aniversariantes_aguia_contab_${dataStr}.csv`;
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        showToast('CSV exportado com sucesso!', 'success');
+    });
+}
+
+// ============================================
+// BOTÃO REFRESH
+// ============================================
+const btnRefresh = document.getElementById('btnRefresh');
+if (btnRefresh) {
+    btnRefresh.addEventListener('click', function() {
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+        this.disabled = true;
+        carregarDados().finally(() => {
+            this.innerHTML = '<i class="fas fa-sync"></i> Atualizar';
+            this.disabled = false;
+            showToast('Dados atualizados!', 'info');
+        });
+    });
+}
+
+// ============================================
+// MASCARAS CNPJ (INPUTS)
+// ============================================
+const cnpjInput = document.getElementById('cnpj');
+if (cnpjInput) {
+    cnpjInput.addEventListener('input', function() { mascaraCnpj(this); });
+}
+
+const editCnpjInput = document.getElementById('editCnpj');
+if (editCnpjInput) {
+    editCnpjInput.addEventListener('input', function() { mascaraCnpj(this); });
+}
+
+// ============================================
+// INICIALIZAR
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    carregarDados();
+});
 </script>
 
 </body>
