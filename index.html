@@ -27,7 +27,7 @@
   }
   header {
     padding: 32px 24px 16px;
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
     color: white;
   }
@@ -35,7 +35,7 @@
   header p { margin: 0; color: #cbd5e1; font-size: 14px; }
 
   main {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 0 24px 60px;
   }
@@ -69,7 +69,7 @@
 
   .form-grid {
     display: grid;
-    grid-template-columns: 2fr 1.3fr 1fr auto;
+    grid-template-columns: 1.6fr 1.1fr 1.4fr 1fr auto;
     gap: 10px;
     align-items: end;
   }
@@ -111,6 +111,7 @@
   tbody td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);
+    vertical-align: middle;
   }
   tbody tr:hover { background: #f8fafc; }
   .actions-col { width: 140px; white-space: nowrap; }
@@ -122,15 +123,45 @@
     width: 100%;
   }
 
+  /* Destaque de aniversário */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-left: 6px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .badge-today {
+    background: #16a34a;
+    color: white;
+    animation: pulse 1.4s infinite;
+  }
   .badge-soon {
     background: #fef3c7;
     color: #92400e;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 700;
-    margin-left: 6px;
   }
+  .badge-week {
+    background: #ffedd5;
+    color: #9a3412;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); }
+    70%  { box-shadow: 0 0 0 7px rgba(22, 163, 74, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+  }
+
+  tr.row-today {
+    background: #f0fdf4 !important;
+    box-shadow: inset 3px 0 0 var(--success);
+  }
+  tr.row-today:hover { background: #dcfce7 !important; }
+  tr.row-week {
+    background: #fff7ed;
+  }
+  tr.row-week:hover { background: #ffedd5; }
 
   #status {
     font-size: 13px;
@@ -192,6 +223,10 @@
         <input type="text" id="inputCnpj" placeholder="00.000.000/0000-00">
       </div>
       <div>
+        <label>Sócio(s)</label>
+        <input type="text" id="inputSocios" placeholder="Ex: João Silva, Maria Souza">
+      </div>
+      <div>
         <label>Data de aniversário</label>
         <input type="date" id="inputData">
       </div>
@@ -204,7 +239,7 @@
   <div class="card">
     <div class="toolbar">
       <div class="toolbar-left">
-        <input type="text" id="search" placeholder="🔍 Buscar por empresa ou CNPJ..." style="width:280px;">
+        <input type="text" id="search" placeholder="🔍 Buscar por empresa, CNPJ ou sócio..." style="width:300px;">
         <button class="btn-secondary" id="btnReload">↻ Recarregar</button>
       </div>
       <div>
@@ -218,6 +253,7 @@
           <tr>
             <th>Empresa</th>
             <th>CNPJ</th>
+            <th>Sócio(s)</th>
             <th>Data de aniversário</th>
             <th class="actions-col">Ações</th>
           </tr>
@@ -272,14 +308,45 @@ function formatDateBR(isoOrAny) {
   return `${day}/${month}`;
 }
 
-function isBirthdaySoon(isoOrAny) {
-  if (!isoOrAny) return false;
+// Retorna quantos dias faltam até o próximo aniversário (0 = hoje), ou null se data inválida
+function daysUntilBirthday(isoOrAny) {
+  if (!isoOrAny) return null;
   const d = new Date(isoOrAny);
-  if (isNaN(d.getTime())) return false;
+  if (isNaN(d.getTime())) return null;
+
   const today = new Date();
-  const thisYear = new Date(today.getFullYear(), d.getUTCMonth(), d.getUTCDate());
-  const diffDays = Math.ceil((thisYear - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000);
-  return diffDays >= 0 && diffDays <= 30;
+  const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  let next = new Date(today.getFullYear(), d.getUTCMonth(), d.getUTCDate());
+  if (next < todayLocal) {
+    next = new Date(today.getFullYear() + 1, d.getUTCMonth(), d.getUTCDate());
+  }
+  return Math.round((next - todayLocal) / 86400000);
+}
+
+// Monta o HTML do badge de destaque com base nos dias restantes
+function buildBadge(diffDays) {
+  if (diffDays === null) return '';
+  if (diffDays === 0) {
+    return `<span class="badge badge-today">🎉 FAZ ANIVERSÁRIO HOJE!</span>`;
+  }
+  if (diffDays === 1) {
+    return `<span class="badge badge-week">Falta 1 dia</span>`;
+  }
+  if (diffDays <= 7) {
+    return `<span class="badge badge-week">Faltam ${diffDays} dias</span>`;
+  }
+  if (diffDays <= 30) {
+    return `<span class="badge badge-soon">Faltam ${diffDays} dias</span>`;
+  }
+  return '';
+}
+
+function rowHighlightClass(diffDays) {
+  if (diffDays === null) return '';
+  if (diffDays === 0) return 'row-today';
+  if (diffDays <= 7) return 'row-week';
+  return '';
 }
 
 async function loadData() {
@@ -303,19 +370,31 @@ function renderTable() {
   const filtered = allRows.filter(r =>
     !term ||
     (r.empresa || '').toLowerCase().includes(term) ||
-    (r.cnpj || '').toLowerCase().includes(term)
+    (r.cnpj || '').toLowerCase().includes(term) ||
+    (r.socios || '').toLowerCase().includes(term)
   );
+
+  // Ordena: quem faz aniversário mais cedo aparece primeiro
+  filtered.sort((a, b) => {
+    const da = daysUntilBirthday(a.dataAniversario);
+    const db = daysUntilBirthday(b.dataAniversario);
+    if (da === null) return 1;
+    if (db === null) return -1;
+    return da - db;
+  });
 
   tableBody.innerHTML = '';
   emptyState.style.display = filtered.length === 0 ? 'block' : 'none';
 
   filtered.forEach(row => {
     const tr = document.createElement('tr');
+    const diffDays = daysUntilBirthday(row.dataAniversario);
 
     if (editingId === row.id) {
       tr.innerHTML = `
         <td><input class="edit-input" data-field="empresa" value="${escapeHtml(row.empresa)}"></td>
         <td><input class="edit-input" data-field="cnpj" value="${escapeHtml(row.cnpj)}"></td>
+        <td><input class="edit-input" data-field="socios" value="${escapeHtml(row.socios)}"></td>
         <td><input class="edit-input" data-field="dataAniversario" type="date" value="${toInputDate(row.dataAniversario)}"></td>
         <td class="actions-col">
           <button class="btn-primary btn-sm" onclick="saveEdit('${row.id}')">Salvar</button>
@@ -323,11 +402,12 @@ function renderTable() {
         </td>
       `;
     } else {
-      const soon = isBirthdaySoon(row.dataAniversario);
+      tr.className = rowHighlightClass(diffDays);
       tr.innerHTML = `
         <td>${escapeHtml(row.empresa)}</td>
         <td>${escapeHtml(row.cnpj)}</td>
-        <td>${formatDateBR(row.dataAniversario)} ${soon ? '<span class="badge-soon">EM BREVE</span>' : ''}</td>
+        <td>${escapeHtml(row.socios)}</td>
+        <td>${formatDateBR(row.dataAniversario)} ${buildBadge(diffDays)}</td>
         <td class="actions-col">
           <button class="btn-secondary btn-sm" onclick="startEdit('${row.id}')">Editar</button>
           <button class="btn-danger btn-sm" onclick="removeRow('${row.id}')">Excluir</button>
@@ -370,6 +450,7 @@ document.getElementById('btnAdd').addEventListener('click', async () => {
   if (!checkConfig()) return;
   const empresa = document.getElementById('inputEmpresa').value.trim();
   const cnpj = document.getElementById('inputCnpj').value.trim();
+  const socios = document.getElementById('inputSocios').value.trim();
   const dataAniversario = document.getElementById('inputData').value;
 
   if (!empresa || !cnpj || !dataAniversario) {
@@ -379,11 +460,12 @@ document.getElementById('btnAdd').addEventListener('click', async () => {
 
   setStatus('Adicionando...');
   try {
-    const json = await callApi({ action: 'add', data: { empresa, cnpj, dataAniversario } });
+    const json = await callApi({ action: 'add', data: { empresa, cnpj, socios, dataAniversario } });
     allRows = json.rows;
     renderTable();
     document.getElementById('inputEmpresa').value = '';
     document.getElementById('inputCnpj').value = '';
+    document.getElementById('inputSocios').value = '';
     document.getElementById('inputData').value = '';
     setStatus('Registro adicionado com sucesso!', 'success');
   } catch (err) {
@@ -405,6 +487,7 @@ async function saveEdit(id) {
   const row = document.querySelector(`tr:has(button[onclick="saveEdit('${id}')"])`);
   const empresa = row.querySelector('[data-field="empresa"]').value.trim();
   const cnpj = row.querySelector('[data-field="cnpj"]').value.trim();
+  const socios = row.querySelector('[data-field="socios"]').value.trim();
   const dataAniversario = row.querySelector('[data-field="dataAniversario"]').value;
 
   if (!empresa || !cnpj || !dataAniversario) {
@@ -414,7 +497,7 @@ async function saveEdit(id) {
 
   setStatus('Salvando...');
   try {
-    const json = await callApi({ action: 'update', id, data: { empresa, cnpj, dataAniversario } });
+    const json = await callApi({ action: 'update', id, data: { empresa, cnpj, socios, dataAniversario } });
     allRows = json.rows;
     editingId = null;
     renderTable();
@@ -445,12 +528,13 @@ document.getElementById('btnExportCsv').addEventListener('click', () => {
     setStatus('Nada para exportar.', 'error');
     return;
   }
-  const header = ['EMPRESA', 'CNPJ', 'DATA_ANIVERSARIO'];
+  const header = ['EMPRESA', 'CNPJ', 'SOCIOS', 'DATA_ANIVERSARIO'];
   const lines = [header.join(';')];
   allRows.forEach(r => {
     const line = [
       csvEscape(r.empresa),
       csvEscape(r.cnpj),
+      csvEscape(r.socios),
       csvEscape(formatDateISOForCsv(r.dataAniversario))
     ].join(';');
     lines.push(line);
